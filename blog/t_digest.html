@@ -14589,16 +14589,32 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
     init_mathjax();
     </script>
     <!-- End of mathjax configuration --></head>
-<body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 
+<body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
+<h1 style="text-align:center">How to calculate latency numbers (p90) with millions of requests</h1>
+<style>
+a:link {
+  text-decoration: none;
+  color: var(--jp-content-link-color);
+}
+a:hover {
+  text-decoration: underline;
+  color: var(--jp-content-link-color);
+}
+a:visited {
+  text-decoration: none;
+  color: var(--jp-content-link-color);
+}
+
+</style>
+<p style="text-align:center"><a href="../index.html">Jerry Huang</a></p>
+<p style="text-align:center">January 27, 2023</p>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 style="text-align:center">How to calculate latency numbers (p90) with millions of requests</h1>
-<p style="text-align:center">January 27, 2023</p>
 <h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">&#182;</a></h2><p>Let's say you want to compute a sample distribution, but the number of samples is too large to fit into memory. Specifically, we want to calculate the CDF of distribution, and use the inverse CDF to find how many samples are below a certain percentile. One common use case is latency monitoring, we often want to look at percentiles like p90, but have too many requests to provide an exact answer.</p>
 <p>The first way I thought of tackling this problem is with bucketing. We can define buckets over the range of where our samples lie, creating new buckets if we see a sample that doesn't lie within any of our existing buckets. Then we calculate any percentile by constructing a CDF (via prefix sum).</p>
 <p>There are a few issues with this approach. First is that towards the edges of our histogram, we want smaller buckets. This is because we don't average out outliers within one bucket [1]. Second, our histogram buckets don't change. As an example, say we have a bucket at $x=1$ with a width of 6. If we input a stream with only 3s, our histogram will define the middle of these values as 1, but the true middle is at 3. Is there a way to determine both size and location of a histogram bucket while ingesting a stream of requests?</p>
