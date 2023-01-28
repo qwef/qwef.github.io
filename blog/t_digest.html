@@ -14597,7 +14597,9 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">&#182;</a></h1><p>Let's say you want to compute a sample distribution, but the number of samples is too large to fit into memory. Specifically, we want to calculate the CDF of distribution, and use the inverse CDF to find how many samples are below a certain percentile. One common use case is latency monitoring, we often want to look at percentiles like p90, but have too many requests to provide an exact answer.</p>
+<h1 style="text-align:center">How to calculate latency numbers (p90) with millions of requests</h1>
+<p style="text-align:center">January 27, 2023</p>
+<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">&#182;</a></h2><p>Let's say you want to compute a sample distribution, but the number of samples is too large to fit into memory. Specifically, we want to calculate the CDF of distribution, and use the inverse CDF to find how many samples are below a certain percentile. One common use case is latency monitoring, we often want to look at percentiles like p90, but have too many requests to provide an exact answer.</p>
 <p>The first way I thought of tackling this problem is with bucketing. We can define buckets over the range of where our samples lie, creating new buckets if we see a sample that doesn't lie within any of our existing buckets. Then we calculate any percentile by constructing a CDF (via prefix sum).</p>
 <p>There are a few issues with this approach. First is that towards the edges of our histogram, we want smaller buckets. This is because we don't average out outliers within one bucket [1]. Second, our histogram buckets don't change. As an example, say we have a bucket at $x=1$ with a width of 6. If we input a stream with only 3s, our histogram will define the middle of these values as 1, but the true middle is at 3. Is there a way to determine both size and location of a histogram bucket while ingesting a stream of requests?</p>
 <p>From this question came $t$-digest, which I like to think of as a dynamic histogram bucketing technique. Assume we have a histogram of values, where each bucket is a cluster of points. Let's say we are adding a new sample. We create a bound function that checks if the cluster we are adding is too big. If so, we split up the cluster into two clusters. Notice how we already solved the problem of choosing the location of a histogram bucket, since we don't predefine the cluster location.</p>
@@ -14708,7 +14710,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Notice that our quantile will never be completely 0 or 100 as we always choose a cluster.</p>
-<h1 id="Testing">Testing<a class="anchor-link" href="#Testing">&#182;</a></h1><p>Let's build the T-Digest of the uniform distribution from 0 to 10000, sampling 10000 times. To sanity check, we should check the quantile value at 9000 should be around 90%.</p>
+<h2 id="Testing">Testing<a class="anchor-link" href="#Testing">&#182;</a></h2><p>Let's build the T-Digest of the uniform distribution from 0 to 10000, sampling 10000 times. To sanity check, we should check the quantile value at 9000 should be around 90%.</p>
 
 </div>
 </div>
@@ -14913,7 +14915,7 @@ jp-needs-light-background
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Merging">Merging<a class="anchor-link" href="#Merging">&#182;</a></h1><p>Oftentimes, we have multiple servers with their own T-Digest, but we want to aggregate them into one T-Digest (i.e. getting the overall latency of a system). We can already do a merge with our update(x, mass) function, simply go through all the clusters of one T-Digest and add those to another.</p>
+<h2 id="Merging">Merging<a class="anchor-link" href="#Merging">&#182;</a></h2><p>Oftentimes, we have multiple servers with their own T-Digest, but we want to aggregate them into one T-Digest (i.e. getting the overall latency of a system). We can already do a merge with our update(x, mass) function, simply go through all the clusters of one T-Digest and add those to another.</p>
 <p>However, note that the order which we call self.update matters. Calling update(1), update(2), update(3), ... update(n) will produce a different result than a random permutation of 1 to n.</p>
 <p>This is important when merging T-Digests, where we want our T-Digest to be accurate as possible. A small example of the difference between random merging and merging in sorted order in shown here:</p>
 
@@ -15062,7 +15064,7 @@ sorted 9.55337922247902 22
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Sorted is better with fewer clusters, but this is one data point so it isn't too conclusive. I recommend looking at this <a href="https://www.youtube.com/watch?v=ETUYhEZRtWE">talk</a> [2] to see a more thorough analysis.</p>
-<p>The links which I found helpful in understanding T-Digests:</p>
+<h2 id="Note-on-Complexity">Note on Complexity<a class="anchor-link" href="#Note-on-Complexity">&#182;</a></h2><p>You might've noticed that <code>update</code> is $O(n)$. For simplicity sake, I had the backing data structure of <code>self.clusters</code> be an unsorted array. If the backing data structure was instead a balanced BST, we would be able to compute <code>update</code> in $O(\log n)$.</p>
 
 </div>
 </div>
@@ -15074,8 +15076,7 @@ sorted 9.55337922247902 22
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Links</p>
-<p>[1] <a href="https://www.circonus.com/2018/11/the-problem-with-percentiles-aggregation-brings-aggravation/">https://www.circonus.com/2018/11/the-problem-with-percentiles-aggregation-brings-aggravation/</a></p>
+<h2 id="Links">Links<a class="anchor-link" href="#Links">&#182;</a></h2><p>[1] <a href="https://www.circonus.com/2018/11/the-problem-with-percentiles-aggregation-brings-aggravation/">https://www.circonus.com/2018/11/the-problem-with-percentiles-aggregation-brings-aggravation/</a></p>
 <p>[2] <a href="https://www.youtube.com/watch?v=ETUYhEZRtWE">https://www.youtube.com/watch?v=ETUYhEZRtWE</a></p>
 
 </div>
