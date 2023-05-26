@@ -14590,7 +14590,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
     </script>
     <!-- End of mathjax configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<h1 style="text-align:center">random() * random() vs random()^2</h1>
+<h1 style="text-align:center">random() * random() vs random()**2</h1>
 <style>
 a:link {
   text-decoration: none;
@@ -14609,6 +14609,7 @@ a:visited {
 <p style="text-align:center"><a href="../index.html">Jerry Huang</a></p>
 <p style="text-align:center">May 26, 2023</p>
 <br>
+
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -14749,7 +14750,7 @@ class="
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Looks like <code>random()^2</code> clearly has much smaller values. Here's my (maybe wrong) intuition. Consider the $x\in[0,1],y\in [0,1]$ square. Think of <code>random() * random()</code> drawing uniformly within the 1 by 1 square, and mulitplying hte $x$ and $y$ value. Then, <code>random()^2</code> is like the diagonal line, where $x = y$. It makes sense that small values are a larger part of of the diagonal line than the square. Say $x,y &lt;= 0.1$ produces a value of 0. Then $1 - 0.1$ is the part of the line that produces $0$, but $1 - 0.1^2$ of the square produces $0$.</p>
+<p>Looks like <code>random() ** 2</code> clearly has much smaller values. Here's my (maybe wrong) intuition. Consider the $x\in[0,1],y\in [0,1]$ square. Think of <code>random() * random()</code> drawing uniformly within the 1 by 1 square, and mulitplying the $x$ and $y$ value. Then, <code>random() ** 2</code> is like the diagonal line, where $x = y$. It makes sense that small values are a larger part of of the diagonal line than the square. Say $x,y \leq 0.1$ produces a value of $xy = 0$ after the precision cutoff. Then $P(xy = 0) = 0.1$ for the line, but $P(xy = 0) = 0.1^2$ for the square produces $0$.</p>
 
 </div>
 </div>
